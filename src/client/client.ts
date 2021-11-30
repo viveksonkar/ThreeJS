@@ -3,6 +3,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
 import Stats from 'three/examples/jsm/libs/stats.module'
 import { GUI } from 'three/examples/jsm/libs/dat.gui.module'
+import { interval } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 const scene = new THREE.Scene()
 scene.add(new THREE.AxesHelper(5))
@@ -30,6 +32,9 @@ const controls = new OrbitControls(camera, renderer.domElement)
 controls.enableDamping = true
 controls.target.set(0, 1, 0)
 
+var targetObj: THREE.Group;
+createInputField();
+
 //const material = new THREE.MeshNormalMaterial()
 
 const fbxLoader = new FBXLoader()
@@ -45,7 +50,8 @@ fbxLoader.load(
         //     }
         // })
         // object.scale.set(.01, .01, .01)
-        scene.add(object)
+        scene.add(object);
+        targetObj = object;
 
 
         const gui = new GUI()
@@ -59,7 +65,8 @@ fbxLoader.load(
         cameraFolder.open()
     },
     (xhr) => {
-        console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
+        console.log((xhr.loaded / xhr.total) * 100 + '% loaded');
+        rotate();
     },
     (error) => {
         console.log(error)
@@ -89,6 +96,44 @@ function animate() {
 
 function render() {
     renderer.render(scene, camera)
+}
+
+function createInputField() {
+    const input = document.createElement("input");
+    input.setAttribute("type", "text");
+    document.body.appendChild(input);
+
+    input.addEventListener('input', updateValue);
+
+    input.style.height =  '30px';
+    input.style.width = '250px';
+    input.style.position = 'absolute';
+    input.style.background = 'white';
+    input.style.top = '0';
+}
+
+function updateValue(e: any) {
+    console.log("Input field Value => ", e.target.value);
+    targetObj.rotation.x = e.target.value;
+    let intialRotation = 0;
+    interval(300).pipe(
+        tap( sec => {
+            intialRotation += 50;
+            console.log("intialRotation => ", intialRotation);
+            targetObj.rotation.x = intialRotation;
+        })
+    )
+}
+
+function rotate() {
+    let intialRotation = 0;
+    interval(300).pipe(
+        tap( sec => {
+            intialRotation += 50;
+            console.log("intialRotation => ", intialRotation);
+            targetObj.rotation.x = intialRotation;
+        })
+    ).subscribe();
 }
 
 animate()
